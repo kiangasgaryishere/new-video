@@ -7,7 +7,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Persian,Noto Sans Arabic,68,&H002A2424,&H002A2424,&H08F7FAFB,&H00000000,-1,0,0,0,100,100,0,0,3,13,0,5,90,110,0,1
+Style: Persian,Noto Sans Arabic,78,&H002A2424,&H002A2424,&H08F7FAFB,&H00000000,-1,0,0,0,100,100,0,0,3,13,0,5,90,110,0,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
