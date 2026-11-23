@@ -34,89 +34,101 @@ function makeMap(){
  for(const r of coast){c.beginPath();r.forEach(([a,b],i)=>c[i?'lineTo':'moveTo']((a+180)*960/360,(85-b)*500/155));c.closePath();c.fillStyle='#c1b289';c.fill();c.strokeStyle='#776c50';c.stroke()}
  return m;
 }
-function loc(lon,lat){return [30+(lon+180)*480/360,192+(85-lat)*250/155]}
-function pin(lon,lat,t){
- const [x,y]=loc(lon,lat);
- g.strokeStyle=coral;g.lineWidth=2;g.beginPath();g.arc(x,y,6+clamp(t)*4,0,7);g.stroke();
- g.fillStyle=coral;g.beginPath();g.arc(x,y,3,0,7);g.fill();
+function ellipse(x,y,rx,ry,color){
+ g.fillStyle=color;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill();
 }
-function route(a,b,p){
- let [x,y]=loc(...a),[u,v]=loc(...b);
- g.save();g.beginPath();g.moveTo(x,y);g.setLineDash([4,4]);g.lineWidth=2.1;g.strokeStyle=coral;
- for(let i=1;i<=Math.ceil(40*p);i++){const k=Math.min(i/40,p);g.lineTo(x+(u-x)*k,y+(v-y)*k-17*Math.sin(k*Math.PI))}
- g.stroke();g.restore();
+function compass(x,y,t){
+ g.save();g.translate(x,y);g.rotate(-.15);
+ ellipse(0,0,44,44,'#675639');ellipse(0,0,39,39,cream);
+ for(let j=0;j<24;j++){g.rotate(Math.PI/12);g.fillStyle=ink;g.fillRect(-1,-37,2,j%3?3:7)}
+ g.rotate(-1.15+Math.exp(-t*1.3)*Math.sin(t*7)*2);
+ for(const col of [coral,navy]){g.fillStyle=col;g.beginPath();g.moveTo(0,-32);g.lineTo(7,0);g.lineTo(-7,0);g.fill();g.rotate(Math.PI)}
+ ellipse(0,0,3,3,cream);g.restore();
 }
-function stamp(str,x,y,angle,col){
- g.save();g.translate(x,y);g.rotate(angle);g.strokeStyle=col;g.lineWidth=2;const w=137;g.strokeRect(-w/2,-13,w,26);
- type(str,0,0,13,col,false,w-8);g.restore();
+function paperPlane(t){
+ const p=clamp((t-.5)/3.8);
+ const path=k=>[-70+690*k,285-145*Math.sin(k*Math.PI)+45*k];
+ g.save();g.setLineDash([6,6]);g.strokeStyle=coral;g.lineWidth=3;g.beginPath();
+ for(let n=0;n<=50;n++){const xy=path(p*n/50);n?g.lineTo(...xy):g.moveTo(...xy)}g.stroke();
+ g.translate(...path(p));g.rotate(Math.atan2(45-145*Math.PI*Math.cos(p*Math.PI),690));g.setLineDash([]);
+ g.fillStyle=cream;g.beginPath();g.moveTo(-32,-15);g.lineTo(31,0);g.lineTo(-28,22);g.lineTo(-16,3);g.closePath();g.fill();g.strokeStyle=ink;g.lineWidth=2;g.stroke();
+ g.beginPath();g.moveTo(-16,3);g.lineTo(31,0);g.stroke();g.restore();
 }
 function paint(t){
- const i=shots.findLastIndex(s=>s[0]<=t),[start,id,fa,en,kind,lon,lat]=shots[i],age=t-start,q=stepped(age);
- const fiction=kind==='fiction', special=kind==='special', intro=kind==='intro';
- const arrival=ease((q+.07)/.5);
+ const i=shots.findLastIndex(s=>s[0]<=t);
+ const [start,id,,en,kind,lon,lat]=shots[i],age=t-start,q=stepped(age);
+ const intro=kind==='intro',fiction=kind==='fiction',space=id==='moon',sea=id==='diver';
+ const entry=ease((q+.12)/.65),sway=Math.sin(t*.44);
  g.setTransform(canvas.width/540,0,0,canvas.height/960,0,0);
  g.fillStyle=paper;g.fillRect(0,0,540,960);
- plate(-10,12,560,91,fiction?navy:teal,5);
- type('THE ADVENTURES OF TINTIN',270,40,22,cream);
- type('T R A V E L    A T L A S',270,71,12,'#e4c68c');
- g.strokeStyle='#736d56';g.lineWidth=1;g.strokeRect(19,116,502,727);
- g.save();g.translate(270,437);g.rotate(-.012+.005*Math.sin(t*.4));g.translate(-270,-437);
- plate(5,154,552,409,fiction?'#718886':special?'#344d5e':'#c8a568',11);
- plate(15,169,506,293,cream,13);
- if(fiction||special){
-   plate(29,187,482,260,fiction?'#b9ae87':navy,21);
-   if(id==='diver'){
-     for(let j=0;j<6;j++){
-       g.beginPath();for(let x=30;x<=510;x+=5){const y=224+j*33+7*Math.sin(x/32+t*.8);x===30?g.moveTo(x,y):g.lineTo(x,y)}
-       g.strokeStyle='#708e91';g.lineWidth=1.8;g.stroke();
-     }
-   }else if(id==='moon'){
-     for(let j=0;j<72;j++){g.fillStyle=cream;g.fillRect(33+noise(j)*470,193+noise(j+98)*246,j%4===0?2.4:1.3,1.9)}
+ if(space||sea){
+   g.fillStyle=space?'#152b43':'#194b54';g.fillRect(0,0,540,960);
+   if(space){
+     for(let n=0;n<108;n++){const x=noise(n)*540,y=(noise(n+135)*1000+age*17)%1000-20;
+       ellipse(x,y,n%6?1:2.5,n%6?1:2.5,cream)}
    }else{
-     for(let j=0;j<7;j++){g.strokeStyle='#968363';g.lineWidth=.85;g.beginPath();
-       for(let k=0;k<101;k++){const a=k*Math.PI/50,rad=(32+j*14)*(1+.09*Math.cos(3*a)+.06*Math.sin(5*a));
-       const x=258+1.63*rad*Math.cos(a),y=312+.83*rad*Math.sin(a);k?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
+     for(let n=0;n<20;n++){g.beginPath();for(let x=-4;x<=546;x+=10){
+       const y=n*55+Math.sin(x/75+t*.7+n)*12;x===-4?g.moveTo(x,y):g.lineTo(x,y)}
+       g.strokeStyle='#36717a';g.lineWidth=2;g.stroke()}
    }
- }else mapPanel(30,192,480,250);
- if(kind==='place'){
- const last=shots.slice(0,i).reverse().find(s=>s[4]==='place');
- if(last)route(last.slice(5),[lon,lat],ease(age/1.25));pin(lon,lat,age);
- }else if(intro||kind==='title'){
- const path=[[37,55],[15,-4],[-87,42],[31,30],[77,28],[121,31],[-72,-13]];
- path.slice(0,-1).forEach((p,j)=>{const k=clamp((t-.45-j*.46)/.51);if(k){route(p,path[j+1],k);pin(...p,k)}});
- }
- g.restore();
- const tag=fiction?'FICTIONAL TERRITORY':kind==='place'?'GEOGRAPHICAL INDEX':special?'SPECIAL EXPEDITION':'FIELD NOTES';
- stamp(tag,405,151,.036,fiction?coral:navy);
- const portrait=['hero','moon','diver','camera'].includes(id);
- const center=kind==='title'?306:270;
- const slide=(1-arrival)*(i%2?-245:245),land=Math.sin(clamp(age/.68)*Math.PI*2)*9*(1-clamp(age/.68));
- const drift=4*Math.sin(t*.55);
- // The opening cuts from the travelling reporter to the route and then back to the atlas title.
- if(intro){
-  const move=ease((age-1.55)/.95);
-  art('hero',242+slide*.35-107*move,414+land+22*move,330-105*move,492-123*move,-.055+.052*arrival);
-  if(age>1.55){const k=ease((q-1.55)/.52);art('moon',385,440-40*(1-k),152*k,225*k,.075); }
-  if(age>3.2){g.save();g.translate(287,470);g.rotate(-.09);plate(-66,-29,132,58,coral);type('کجا؟',0,-1,30,cream,true);g.restore()}
+ }else if(fiction){
+   g.fillStyle=['#a8b4a1','#b5b39a','#d5b38d','#9eb2a1'][i%4];g.fillRect(0,0,540,960);
+   g.save();g.translate(290+sway*15,415);g.rotate(.3);
+   for(let j=0;j<22;j++){g.beginPath();for(let k=0;k<=100;k++){
+     const a=k*Math.PI/50,r=(39+29*j)*(1+.09*Math.cos(3*a)+.07*Math.sin(5*a));
+     const x=1.4*r*Math.cos(a),y=r*Math.sin(a);k?g.lineTo(x,y):g.moveTo(x,y)}
+     g.strokeStyle='#68786d';g.lineWidth=.8;g.stroke()}g.restore();
  }else{
-  const fly=id==='moon'?-Math.min(45,age*17):0;
-  const push=1+.075*ease(Math.max(0,age-.85)/4);
-  g.save();g.translate(center+slide+drift,427+land+fly);
-  // A hinged card opens in discrete poses, with the next plate already on the table.
-  const hinge=clamp((q+.12)/.49);
-  g.scale(.38+.62*Math.sin(hinge*Math.PI/2),1);
-  art(id,0,0,(portrait?350:437)*push,(portrait?399:337)*push,(1-arrival)*.13+.016*Math.sin(i));
-  g.restore();
-  if(['camera','book','andes','castle'].includes(id)&&age>3.1){
-   const k=ease((q-3.1)/.6);
-   art(id==='book'?'hero':id==='camera'?'book':'camera',465+105*(1-k),505,103,129,.07);
-  }
+   const w=1960,h=w*500/960;
+   const centerLon=kind==='place'?lon:20,centerLat=kind==='place'?lat:25;
+   const x=270-(centerLon+180)*w/360+24*sway;
+   const y=Math.min(0,Math.max(960-h,290-(85-centerLat)*h/155));
+   for(let n=-1;n<=1;n++)mapPanel(x+n*w,y,w,h);
+   if(kind==='place'){
+     const px=x+(lon+180)*w/360,py=y+(85-lat)*h/155;
+     const p=(age%2)/2;g.save();g.globalAlpha=1-p;g.strokeStyle=coral;g.lineWidth=3;
+     g.beginPath();g.arc(px,py,9+p*30,0,7);g.stroke();g.restore();
+     ellipse(px,py,6,6,coral);
+   }
  }
- const tab=fiction?'کشور خیالی':special?'فراتر از خشکی':kind==='place'?'مسیر سفر':'دفتر سفر';
- g.save();g.translate(0,Math.max(0,1-arrival)*26);g.rotate(-.011);
- plate(32,567,479,147,cream,27);plate(39,571,462,8,fiction?coral:teal,3);
- type(fa,272,617,38,ink,true,433);type(en,270,673,34,fiction?coral:navy,false,425);g.restore();
- plate(38,121,150,30,navy);type(tab,113,136,15,cream,true,142);
+ const x=270+(1-entry)*(i%2?-146:146)+8*sway;
+ const y=465+Math.sin(i)*18+(1-entry)*54;
+ if(intro||kind==='title'||kind==='end'){
+   const k=intro?ease(age/2):1;
+   art('hero',x-25*k,y+22,544,775,-.035+.025*k);
+   compass(456,183,age);
+   if(intro)paperPlane(q);
+ }else{
+   if(id==='rail'){
+     for(let n=0;n<11;n++){const k=(q*.35+n/11)%1;g.save();g.globalAlpha=.55*(1-k);
+       ellipse(178-134*k,355-224*k,12+37*k,10+30*k,cream);g.restore()}
+   }
+   const rise=space?-100*ease(age/1.85):sea?45*ease(age/1.8):0;
+   if(space){
+     for(let j=0;j<7;j++){const p=(q*.95+j/7)%1;g.save();g.globalAlpha=1-p;
+       ellipse(262+14*Math.sin(j*2),y+rise+179+155*p,12+21*p,35+31*p,j%2?cream:coral);g.restore()}
+   }
+   const push=1+.08*ease(age/4);
+   art(id,x,y+rise,545*push,690*push,.019*Math.sin(i)+(1-entry)*.10);
+   if(sea){
+     for(let n=0;n<16;n++){const k=(age*.32+n/16)%1;
+       const bx=325+45*Math.sin(k*8+n*.8),by=533-k*660;
+       g.beginPath();g.arc(bx,by,3+10*k,0,7);g.lineWidth=1.8;g.strokeStyle='#dbeee2';g.stroke()}
+   }
+   if(id==='camera'){
+     const p=clamp((age-3.65)/.52);
+     if(p>0&&p<1){
+       const r=520*(1-Math.sin(p*Math.PI));g.beginPath();g.rect(-1,-1,542,962);
+       g.moveTo(270+r,440);g.arc(270,440,r,0,Math.PI*2,true);g.fillStyle=navy;g.fill('evenodd');
+     }
+   }
+ }
+ const country=fiction||(kind==='place'&&id!=='rider');
+ if(country){
+   const labelY=112+15*(1-entry),width=Math.min(415,70+en.length*15);
+   g.save();g.translate(270,labelY);g.rotate(-.024);plate(-width/2,-28,width,57,cream,13);
+   type(en,0,1,34,ink,false,width-19);g.restore();
+ }
  const cue=captions.find(a=>a[0]<=t&&t<a[1]);
  if(cue){
   let lines=cue[2].split('|');
