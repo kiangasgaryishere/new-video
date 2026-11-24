@@ -51,6 +51,7 @@ function paint(t){
  const cut=edit.findLastIndex(row=>row[0]<=t);
  g.setTransform(canvas.width/540,0,0,canvas.height/960,0,0);
  compose(t,cut);
+ travelCompanion(edit[cut][1],t-edit[cut][0]);
  transition(t);
  if((kind==='place'&&id!=='rider')||kind==='fiction'){
    const w=Math.min(415,70+en.length*15);
@@ -75,6 +76,7 @@ window.render=t=>{if(canvas.width!==innerWidth||canvas.height!==innerHeight){can
 (async()=>{
  const data=await(await fetch('story.json')).json();shots=data.shots;captions=data.captions;coast=await(await fetch('art/coast.json')).json();map=makeMap();
  await Promise.all([...new Set([...shots.map(s=>s[1]),"ship","scope","balloon","pen"])].map(async id=>{const im=new Image();im.src='art/'+id+'.webp';await im.decode();imgs[id]=im}));
+ await loadCast();
  globes=await Promise.all(Array.from({length:64},async(_,i)=>{const im=new Image();im.src='art/globes/'+i+'.webp';await im.decode();return im}));
  const tile=document.createElement('canvas');tile.width=tile.height=180;
  const c=tile.getContext('2d'),px=c.createImageData(180,180);

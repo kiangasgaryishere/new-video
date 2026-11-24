@@ -9,3 +9,5 @@ Cartographic outlines: Natural Earth, public-domain 1:110m land polygons, https:
 Visual direction references Lemo Opuscar's Vintage Engraving Collage style, revision f9e204293930952b61ba921cd8944d05f121beee. All layouts and animation were made for this film.
 
 Sound effects: Wyzowl SFX Kit, CC0 1.0, https://github.com/wyzowl/sfx-kit. The cue sheet in sound.json records each sample, placement and gain. The additional wave, wind and steam sound bridges are synthesised in mix.py. No music bed.
+
+The character-animation revision uses seven newly illustrated four-pose sequences (traveller with Snowy, climber, sailor, jungle explorer, rider, diver, photographer), a separate terrier gait cycle, and eight full-bleed scenic backdrops generated for this reel. Render timing and character blocking are in characters.js.

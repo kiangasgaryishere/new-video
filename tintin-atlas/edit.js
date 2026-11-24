@@ -10,14 +10,6 @@ const edit = [
  [99.4,'crossing'],[101.36,'souvenirs'],[104.57,'pages'],[108.0,'farewell']
 ];
 let globes=[];
-function field(i,mode){
- const colors=['#285f68','#bd6146','#c6a454','#627f72'];
- g.fillStyle=paper;g.fillRect(0,0,540,960);
- g.save();g.translate(270,455);g.rotate(i%2?.15:-.16);
- plate(-440,-320,880,630,colors[i%4],i);
- g.globalAlpha=.58;ellipse(i%2?148:-102,-136,157,157,mode==='moon'?'#eee1b4':'#e3bf77');
- g.restore();
-}
 function globe(t,x,y,r){
  const n=Math.floor((t*6+12)%64);
  g.save();g.translate(x,y);g.rotate(-.12);g.shadowColor='#35332477';g.shadowBlur=12;g.shadowOffsetY=9;
@@ -49,9 +41,10 @@ function vignette(id,t,x=270,y=449,w=533,h=649,angle=0){
 const realPlaces=new Set(['rail','jungle','chicago','egypt','india','china','andes']);
 function compose(t,index){
  const [start,mode]=edit[index], a=t-start,q=stepped(a),k=ease(a/.7);
- field(index,mode);
+ scenery(mode,a);
+ if(perform(mode,a))return;
  if(realPlaces.has(mode)){
-   g.save();g.globalAlpha=.5;mapPanel(-135+6*a,135,810,420);g.restore();
+
    vignette(mode,a,270,468,526,637);
    if(mode==='rail'){
      for(let n=0;n<8;n++){const f=(q*.38+n/8)%1;g.save();g.globalAlpha=(1-f)*.68;
