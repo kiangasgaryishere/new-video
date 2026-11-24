@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import numpy as np
 import soundfile as sf
-from scipy.signal import resample_poly
+from scipy.signal import butter, resample_poly, sosfilt
 from math import gcd
 
 voice, kit, output = map(Path, sys.argv[1:])
@@ -25,6 +25,19 @@ for i, (at, name, gain) in enumerate(json.loads(Path(__file__).with_name("sound.
     fx[-fade:] *= np.linspace(1, 0, fade)
     pan = .18 * np.sin(i * 2)
     bed[round(at * rate):round(at * rate)+length] += fx[:,None] * np.array([1-pan, 1+pan])
+# Sound bridges. Waves precede the ship cut and wash into the balloon shot.
+rng = np.random.default_rng(1103)
+for start, end, low, high, gain in [(4.85, 8.95, 110, 1450, .055),
+                                    (8.19, 11.95, 230, 2100, .027),
+                                    (13.51, 16.98, 1500, 3300, .038),
+                                    (20.65, 23.10, 100, 1100, .033)]:
+    count = round((end-start)*rate)
+    t = np.arange(count)/rate
+    env = np.clip(t/.45, 0, 1)*np.clip((end-start-t)/.47, 0, 1)
+    env *= .58+.42*np.sin(t*2.8)**2
+    stereo = sosfilt(butter(2, [low,high], fs=rate, btype='bandpass', output='sos'),
+                     rng.normal(size=(count,2)), axis=0)
+    bed[round(start*rate):round(start*rate)+count] += stereo*env[:,None]*gain
 mix = narration[:,None] + bed
 mix *= min(1, .90 / np.max(np.abs(mix)))
 sf.write(output, mix, rate, subtype="PCM_24")
