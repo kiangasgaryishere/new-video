@@ -10,6 +10,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
+from motion import painted_motion
+
 ROOT = Path(__file__).resolve().parent
 EDIT = json.loads((ROOT / "edit.json").read_text())
 W, H, FPS = 720, 1280, 30
@@ -143,29 +145,18 @@ def frame(time):
     idx = max(i for i, shot in enumerate(shots) if shot["t"] <= time)
     shot = shots[idx]
     end = shots[idx + 1]["t"] if idx + 1 < len(shots) else EDIT["duration"]
-    drawing = painted(shot, time, end)
     elapsed = time - shot["t"]
+    drawing = painted_motion(painted(shot, time, end), shot.get("motion"), shot.get("anchor"), elapsed)
     if idx and elapsed < .38 and shot["art"] != shots[idx - 1]["art"]:
-        prev = painted(shots[idx - 1], shot["t"] - .001, shot["t"])
+        previous = shots[idx - 1]
+        prev = painted_motion(painted(previous, shot["t"] - .001, shot["t"]),
+                              previous.get("motion"), previous.get("anchor"),
+                              shot["t"] - previous["t"] - .001)
         boundary = elapsed / .38 * 1.84 - .36
         wipe = smooth((boundary - gx / AW - .17 * gy / AH + front_noise) / .12)
         drawing = Image.composite(drawing, prev, Image.fromarray(np.uint8(wipe * 255)))
     board = page.copy()
     board.paste(drawing, (AX, AY), edge)
-
-    # Moving wash flecks catch the light while the paper stays fixed.
-    if .38 < elapsed < 3.1:
-        fx = Image.new("RGBA", (W, H))
-        d = ImageDraw.Draw(fx)
-        for i in range(12):
-            origin_x, origin_y = shot["bloom"]
-            p = (elapsed - .38) / 2.72
-            x = W * origin_x + math.cos(i * 3.91) * (28 + p * (22 + 18 * i))
-            y = AY + AH * origin_y + math.sin(i * 3.91) * (20 + p * (9 + 9 * i)) - p * 29
-            opacity = max(0, int(155 * math.sin(math.pi * p) * (1 - i / 17)))
-            r = 1.2 + i % 3 * .65
-            d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 230, 163, opacity))
-        board.paste(fx, (0, 0), fx)
 
     for start, stop, _ in EDIT["headers"]:
         if start <= time < stop:
@@ -181,8 +172,8 @@ def frame(time):
 
     for start, stop, layer in subtitle_layers:
         if start <= time < stop:
-            soft_paper(board, 970, 201, .97)
-            letter(board, layer, 1047 - layer.height // 2)
+            soft_paper(board, 1016, 202, .97)
+            letter(board, layer, EDIT["subtitle_center_y"] - layer.height // 2)
             break
     return board
 
